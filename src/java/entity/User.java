@@ -26,18 +26,27 @@ public class User implements Serializable{
     @Column(unique = true)
     private String login;
     private String password;
+    private String salt;
     @OneToOne
     private Reader reader;
 
     public User() {
     }
 
-    public User(String login, String password, Reader reader) {
+    public User(String login, String password, String salt, Reader reader) {
         this.login = login;
         this.password = password;
+        this.salt = salt;
         this.reader = reader;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getLogin() {
         return login;
@@ -55,6 +64,14 @@ public class User implements Serializable{
         this.password = password;
     }
 
+    public String getSalt() {
+        return salt;
+    }
+
+    public void setSalt(String salt) {
+        this.salt = salt;
+    }
+
     public Reader getReader() {
         return reader;
     }
@@ -65,20 +82,23 @@ public class User implements Serializable{
 
     @Override
     public String toString() {
-        return "User{" 
-                + "login=" + login 
+        return "User{" + "id=" + id
+                + ", login=" + login 
                 + ", password=" + password 
+                + ", salt=" + salt 
                 + ", reader=" + reader.getFirstname()
-                + " " + reader.getLastname()
+                + ", reader=" + reader.getLastname()
                 + '}';
     }
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 19 * hash + Objects.hashCode(this.login);
-        hash = 19 * hash + Objects.hashCode(this.password);
-        hash = 19 * hash + Objects.hashCode(this.reader);
+        int hash = 7;
+        hash = 43 * hash + Objects.hashCode(this.id);
+        hash = 43 * hash + Objects.hashCode(this.login);
+        hash = 43 * hash + Objects.hashCode(this.password);
+        hash = 43 * hash + Objects.hashCode(this.salt);
+        hash = 43 * hash + Objects.hashCode(this.reader);
         return hash;
     }
 
@@ -100,19 +120,19 @@ public class User implements Serializable{
         if (!Objects.equals(this.password, other.password)) {
             return false;
         }
+        if (!Objects.equals(this.salt, other.salt)) {
+            return false;
+        }
+        if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
         if (!Objects.equals(this.reader, other.reader)) {
             return false;
         }
         return true;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+ 
 
     
         

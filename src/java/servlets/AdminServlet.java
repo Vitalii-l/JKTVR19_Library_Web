@@ -81,7 +81,7 @@ public class AdminServlet extends HttpServlet {
             case "/listReaders":
                 List<Reader> listReaders = readerFacade.findAll();
                 request.setAttribute("listReaders", listReaders);
-                request.getRequestDispatcher("/WEB-INF/listReaders.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/admin/listReaders.jsp").forward(request, response);
                 break;
             case "/adminPanel":
                 Map<User,String> usersMap = new HashMap<>();
@@ -92,7 +92,7 @@ public class AdminServlet extends HttpServlet {
                 }
                 request.setAttribute("usersMap", usersMap);
                 request.setAttribute("listRoles", roleFacade.findAll());
-                request.getRequestDispatcher("/WEB-INF/adminPanel.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/admin/adminPanel.jsp").forward(request, response);
                 break;
             case "/addNewRole":
                 String userId = request.getParameter("userId");

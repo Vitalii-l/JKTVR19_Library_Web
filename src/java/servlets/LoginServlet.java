@@ -5,11 +5,14 @@
  */
 package servlets;
 
+import entity.Book;
 import entity.Reader;
 import entity.Role;
 import entity.User;
 import entity.UserRoles;
 import java.io.IOException;
+import java.util.List;
+import java.util.ResourceBundle;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -17,16 +20,19 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import session.BookFacade;
 import session.ReaderFacade;
 import session.RoleFacade;
 import session.UserFacade;
 import session.UserRolesFacade;
+import tools.EncryptPassword;
 
 /**
  *
  * @author Melnikov
  */
 @WebServlet(name = "LoginServlet", loadOnStartup = 1,  urlPatterns = {
+    "/listBooks",
     "/loginForm", 
     "/login",
     "/logout",
@@ -40,14 +46,20 @@ public class LoginServlet extends HttpServlet {
     private ReaderFacade readerFacade;
     @EJB private RoleFacade roleFacade;
     @EJB private UserRolesFacade userRolesFacade;
+    @EJB private BookFacade bookFacade;
+    EncryptPassword encryptPassword = new EncryptPassword();
 
+    public static final ResourceBundle pathToJsp = ResourceBundle.getBundle("property.pathTojsp");
+    
     @Override
     public void init() throws ServletException {
         super.init(); 
         if(userFacade.findAll().size() > 0) return;
         Reader reader = new Reader("Ivan", "Ivanov", "565456565");
         readerFacade.create(reader);
-        User user = new User("admin", "12345", reader);
+        String salt = encryptPassword.createSalt();
+        String passwordHash = encryptPassword.createHash("12345", salt);
+        User user = new User("admin", passwordHash, salt, reader);
         userFacade.create(user);
         
         Role role = new Role("ADMIN");
@@ -79,13 +91,18 @@ public class LoginServlet extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
         String path = request.getServletPath();
         switch (path) {
+            case "/listBooks":
+                List<Book> listBooks = bookFacade.findAll();
+                request.setAttribute("listBooks", listBooks);
+                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("listBooks")).forward(request, response);
+                break;
             case "/loginForm":
-                request.getRequestDispatcher("/loginForm.jsp").forward(request, response);
+                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("login")).forward(request, response);
                 break;
             case "/login":
                 String login = request.getParameter("login");
@@ -96,7 +113,9 @@ public class LoginServlet extends HttpServlet {
                     request.getRequestDispatcher("/loginForm").forward(request, response);
                     break;
                 }
-                if(!password.equals(user.getPassword())){
+                String passwordHash = encryptPassword.createHash(password, user.getSalt());
+                
+                if(!passwordHash.equals(user.getPassword())){
                     request.setAttribute("info", "Неправильный логин или пароль");
                     request.getRequestDispatcher("/loginForm").forward(request, response);
                     break;
@@ -104,7 +123,7 @@ public class LoginServlet extends HttpServlet {
                 HttpSession httpSession = request.getSession(true);
                 httpSession.setAttribute("user", user);
                 request.setAttribute("info", "Вы вошли как " + user.getLogin());
-                request.getRequestDispatcher("/index.jsp").forward(request, response);
+                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("index")).forward(request, response);
                 break;
             case "/logout":
                 httpSession = request.getSession(false);
@@ -112,10 +131,10 @@ public class LoginServlet extends HttpServlet {
                     httpSession.invalidate();
                     request.setAttribute("info", "Вы вышли!");
                 }
-                request.getRequestDispatcher("/index.jsp").forward(request, response);
+                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("index")).forward(request, response);
                 break;
             case "/registrationForm":
-                request.getRequestDispatcher("/WEB-INF/addReaderForm.jsp").forward(request, response);
+                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("registration")).forward(request, response);
                 break;
             case "/registration":
                 String firstname = request.getParameter("firstname");
@@ -133,19 +152,21 @@ public class LoginServlet extends HttpServlet {
                     request.setAttribute("phone", phone);
                     request.setAttribute("login", login);
                     request.setAttribute("info", "Заполните все поля");
-                    request.getRequestDispatcher("/WEB-INF/addReaderForm.jsp").forward(request, response);
+                    request.getRequestDispatcher("/registrationForm").forward(request, response);
                     break;
                 }
                 Reader reader = new Reader(firstname, lastname, phone);
                 readerFacade.create(reader);
-                user = new User(login, password, reader);
+                String salt = encryptPassword.createSalt();
+                passwordHash = encryptPassword.createHash(password, salt);
+                user = new User(login, passwordHash, salt, reader);
                 userFacade.create(user);
                 Role role = roleFacade.findByName("READER");
                 UserRoles userRoles = new UserRoles(role, user);
                 userRolesFacade.create(userRoles);
                 request.setAttribute("info", "Читатель \"" + reader.getFirstname() +" "+ reader.getLastname()+ "\" добавлен");
-                request.getRequestDispatcher("/index.jsp").forward(request, response);
-                break;    
+                request.getRequestDispatcher(LoginServlet.pathToJsp.getString("index")).forward(request, response);
+                break;        
         }
     }
 
