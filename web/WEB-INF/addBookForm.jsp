@@ -16,6 +16,7 @@
     <p>${info}</p>
     <br>
     <a href="index.jsp">Home</a><br>
+    <p><a href="uploadFileForm"></a></p>
     <form action="createBook" method="POST">
         Название книги: <input type="text" name="name" value="${name}"><br>
         Автор книги: <input type="text" name="author" value="${author}"><br>
