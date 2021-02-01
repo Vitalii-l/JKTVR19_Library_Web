@@ -17,10 +17,19 @@
     <br>
     <a href="index.jsp">Home</a><br>
     <p><a href="uploadFileForm"></a></p>
+    
+    
     <form action="createBook" method="POST">
         Название книги: <input type="text" name="name" value="${name}"><br>
         Автор книги: <input type="text" name="author" value="${author}"><br>
         Год издания книги: <input type="text" name="publishedYear" value="${publishedYear}"><br>
+        Файл обложки: <select name="fileBook">
+            <c:forEach var ="fileBook" items="${listFileBook}">
+                <option value="${Book.id}">${fileBook.description}</option>
+            </c:forEach>
+        </select>
+<!--        <input type="text" name="pathToFile" value="${pathToFile}"><br>-->
+        Описание изображения: <input type="text" name="description" value="${description}" ><br>
         <input type="submit" name="submit" value="Добавить книгу">
     </form>
   </body>

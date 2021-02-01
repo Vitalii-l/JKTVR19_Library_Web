@@ -5,6 +5,7 @@
  */
 package servlets;
 
+import entity.BookFile;
 import entity.User;
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
+import session.BookFileFacade;
 import session.UserRolesFacade;
 
 /**
@@ -34,6 +36,7 @@ import session.UserRolesFacade;
 public class UploadServlet extends HttpServlet {
     
     @EJB private UserRolesFacade userRolesFacade;
+    @EJB private BookFileFacade bookFileFacade;
     
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -74,14 +77,22 @@ public class UploadServlet extends HttpServlet {
                 .stream()
                 .filter(part -> "file".equals(part.getName()))
                 .collect(Collectors.toList());
+        StringBuffer sb = new StringBuffer();
         for(Part filePart : fileParts) {
-            String path = uploadFolder+File.separator+getFileName(filePart);
-            File file = new File(path);
+            sb.append(uploadFolder+File.separator+getFileName(filePart));
+            File file = new File(sb.toString());
             try(InputStream fileContent = filePart.getInputStream()){
                 Files.copy(fileContent, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
         }
+        String description = request.getParameter("description");
+        BookFile bookFile = new BookFile(sb.toString(), description);
+        bookFileFacade.create(bookFile);
+        List<BookFile> listBookFile = bookFileFacade.fildAll();
         
+        request.setAttribute("listBookFile", listBookFile);
+        request.setAttribute("info", "Файл загружен");
+        request.getRequestDispatcher("/addBook").forward(request, response);
     }
         private String getFileName(Part part){
             final String partHeader = part.getHeader("content-disposition");
